@@ -1,0 +1,16 @@
+# Pulp
+
+/bower_components/
+/node_modules/
+/.pulp-cache/
+/output/
+/generated-docs/
+/.psc*
+/.purs*
+/.psa*
+
+# Psc Ide
+.psc-ide-port
+
+# Mac OS
+.DS_Store

@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "name": "formulus",
+  "version": "0.0.1",
+  "description": "Share your calculations",
+  "author": "mpetruska",
+  "license": "MIT",
+  "devDependencies": {
+    "bower": "^1.8.0",
+    "pulp": "^11.0.0",
+    "purescript": "^0.11.4"
+  },
+  "scripts": {
+    "build": "pulp browserify --optimise --to dist/index.js",
+    "test": "pulp test"
+  }
+}

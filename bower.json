@@ -1,0 +1,30 @@
+{
+  "name": "formulus",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output"
+  ],
+  "dependencies": {
+    "purescript-prelude": "^3.0.0",
+    "purescript-console": "^3.0.0",
+    "purescript-maps": "^3.0.0",
+    "purescript-either": "^3.0.0",
+    "purescript-strings": "^3.1.0",
+    "purescript-validation": "^3.0.0",
+    "purescript-bifunctors": "^3.0.0",
+    "purescript-parsing": "^4.2.1",
+    "purescript-control": "^3.0.0",
+    "purescript-identity": "^3.1.0",
+    "purescript-integers": "^3.0.0",
+    "purescript-sets": "^3.0.0",
+    "purescript-numbers": "^5.0.0"
+  },
+  "devDependencies": {
+    "purescript-psci-support": "^3.0.0",
+    "purescript-test-unit": "^11.0.0",
+    "purescript-partial": "^1.2.0",
+    "purescript-foldable-traversable": "^3.0.0"
+  }
+}
