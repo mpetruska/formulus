@@ -1,5 +1,6 @@
 module Data.Formula
        ( Formula
+       , prettyPrintFormula
        , const
        , value
        , negate
@@ -16,15 +17,18 @@ module Data.Formula
 import Prelude
 import Control.Alt ((<|>))
 import Control.Lazy (fix)
-import Data.Either (Either, either)
-import Data.Int (toNumber)
+import Data.Array (singleton, some)
+import Data.Char.Unicode (isDigit)
+import Data.Either (Either)
 import Data.Ring as R
 import Data.Set (Set, union)
 import Data.Set as S
+import Data.String (fromCharArray)
+import Global (readFloat)
 import Text.Parsing.Parser (ParseError, fail, runParser)
-import Text.Parsing.Parser.Combinators (try)
+import Text.Parsing.Parser.Combinators (option, try)
 import Text.Parsing.Parser.Expr (Assoc(..), Operator(..), buildExprParser)
-import Text.Parsing.Parser.String (char, oneOf, string)
+import Text.Parsing.Parser.String (char, oneOf, satisfy, string)
 import Text.Parsing.Parser.Token (GenLanguageDef(..), LanguageDef, TokenParser, digit, makeTokenParser)
 
 import Data.Identifier (Identifier, identifierParser)
@@ -52,18 +56,18 @@ instance showFormula :: Show Formula where
 prettyPrintFormula :: Formula -> String
 prettyPrintFormula (Const n)        = show n
 prettyPrintFormula (Value i)        = show i
-prettyPrintFormula (Negate f)       | precedence(f) > 2 = "-(" <> show f <> ")"
-                                    | otherwise         = "-" <> show f
-prettyPrintFormula (Add f1 f2)      = show f1 <> " + " <> show f2
-prettyPrintFormula (Subtract f1 f2) = show f1 <> " - " <> show f2
-prettyPrintFormula (Multiply f1 f2) | precedence(f1) > 2 && precedence(f2) > 2 = "(" <> show f1 <> ") * (" <> show f2 <> ")"
-                                    | precedence(f1) > 2                       = "(" <> show f1 <> ") * "  <> show f2
-                                    |                       precedence(f2) > 2 =        show f1 <>  " * (" <> show f2 <> ")"
-                                    | otherwise                                =        show f1 <>  " * "  <> show f2
-prettyPrintFormula (Divide f1 f2)   | precedence(f1) > 2 && precedence(f2) > 2 = "(" <> show f1 <> ") / (" <> show f2 <> ")"
-                                    | precedence(f1) > 2                       = "(" <> show f1 <> ") / "  <> show f2
-                                    |                       precedence(f2) > 2 =        show f1 <>  " / (" <> show f2 <> ")"
-                                    | otherwise                                =        show f1 <>  " / "  <> show f2
+prettyPrintFormula (Negate f)       | precedence(f) > 1 = "-(" <> prettyPrintFormula f <> ")"
+                                    | otherwise         = "-"  <> prettyPrintFormula f
+prettyPrintFormula (Add f1 f2)      = prettyPrintFormula f1 <> " + " <> prettyPrintFormula f2
+prettyPrintFormula (Subtract f1 f2) = prettyPrintFormula f1 <> " - " <> prettyPrintFormula f2
+prettyPrintFormula (Multiply f1 f2) | precedence(f1) > 2 && precedence(f2) > 2 = "(" <> prettyPrintFormula f1 <> ") * (" <> prettyPrintFormula f2 <> ")"
+                                    | precedence(f1) > 2                       = "(" <> prettyPrintFormula f1 <> ") * "  <> prettyPrintFormula f2
+                                    |                       precedence(f2) > 2 =        prettyPrintFormula f1 <>  " * (" <> prettyPrintFormula f2 <> ")"
+                                    | otherwise                                =        prettyPrintFormula f1 <>  " * "  <> prettyPrintFormula f2
+prettyPrintFormula (Divide f1 f2)   | precedence(f1) > 2 && precedence(f2) > 2 = "(" <> prettyPrintFormula f1 <> ") / (" <> prettyPrintFormula f2 <> ")"
+                                    | precedence(f1) > 2                       = "(" <> prettyPrintFormula f1 <> ") / "  <> prettyPrintFormula f2
+                                    |                       precedence(f2) > 2 =        prettyPrintFormula f1 <>  " / (" <> prettyPrintFormula f2 <> ")"
+                                    | otherwise                                =        prettyPrintFormula f1 <>  " / "  <> prettyPrintFormula f2
 
 precedence :: Formula -> Int
 precedence (Const _)      = 1
@@ -140,9 +144,13 @@ formulaParser = fix exprParser
     lexeme         = tokenParser.lexeme
     whiteSpace     = tokenParser.whiteSpace
     parens         = tokenParser.parens
-    naturalOrFloat = tokenParser.naturalOrFloat
+    someDigits     = some (satisfy isDigit)
+    dot            = singleton <$> char '.'
+    floatChars     = (<>) <$> someDigits
+                          <*> option [] ((<>) <$> dot <*> someDigits)
+    float          = readFloat <$> fromCharArray <$> floatChars
     
-    constParser = Const <$> (either toNumber id <$> naturalOrFloat)
+    constParser = Const <$> float
     valueParser = Value <$> identifierParser
     termParser p = parens p
                <|> constParser

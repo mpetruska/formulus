@@ -3,21 +3,27 @@ module Test.Data.Formula
        ) where
 
 import Prelude hiding (add, const, negate)
+import Control.Monad.Eff.Random (RANDOM)
 import Data.Either (Either(..), fromRight)
 import Data.Foldable (traverse_)
 import Data.Number (infinity, isNaN)
-import Data.Validation.Semigroup (unV)
 import Test.Unit (Test, TestSuite, suite, test)
 import Test.Unit.Assert (assert, equal)
+import Test.Unit.QuickCheck (quickCheck)
+import Test.QuickCheck ((<?>), Result)
 import Partial.Unsafe (unsafePartial, unsafePartialBecause)
 
-import Data.Formula (Formula, add, const, divide, evaluateFormula, multiply, negate, parseFormula, subtract, value)
+import Data.Formula (Formula, add, const, divide, evaluateFormula, multiply, negate, parseFormula, prettyPrintFormula, subtract, value)
 import Data.Identifier as I
+import Test.Data.Arbitrary.Identifier (identifier)
+import Test.Data.Arbitrary.Formula (ArbitraryFormula, generatedFormula)
 import Validators (Error)
 
-formulaTestSuite :: forall e. TestSuite e
+formulaTestSuite :: forall e. TestSuite (random :: RANDOM | e)
 formulaTestSuite = do
   parsingSuite
+  -- Failing due to JavaScript IEEE 754 numbers precision
+  --propertyBasedParsingSuite
   evaluateSuite
 
 parsingSuite :: forall e. TestSuite e
@@ -63,6 +69,27 @@ parsingSuite =
           (multiply (negate $ add (const 11.0) (value (identifier "x_is_here"))) (const 1.3333))
           (value (identifier "_y"))
 
+
+propertyBasedParsingSuite :: forall e. TestSuite (random :: RANDOM | e)
+propertyBasedParsingSuite =
+    suite "Formula pretty print property" do
+      test "re-parsing" do
+        quickCheck reparsingProducesTheSameValues
+  where
+    reparsingProducesTheSameValues :: ArbitraryFormula -> Result
+    reparsingProducesTheSameValues genf =
+           evaluateFormula ones   f == evaluateFormula ones   reparsed
+        && evaluateFormula twos   f == evaluateFormula twos   reparsed
+        && evaluateFormula threes f == evaluateFormula threes reparsed <?> error
+      where
+        f        = generatedFormula genf
+        printed  = prettyPrintFormula f
+        reparsed = unsafePartial $ fromRight (parseFormula $ printed)
+        error    = "different values returned: " <> show f <> " => " <> printed <> " => " <> show reparsed
+        ones _   = Right 1.0
+        twos _   = Right 2.0
+        threes _ = Right 3.0
+
 evaluateSuite :: forall e. TestSuite e
 evaluateSuite =
     suite "Formula evaluation" do
@@ -87,11 +114,6 @@ evaluateSuite =
               | I.getIdentifierRepresentation i == "z"   = Right 100.0
               | I.getIdentifierRepresentation i == "inf" = Right infinity
               | otherwise                                = Left ("unknown value '" <> I.getIdentifierRepresentation i <> "'")
-
-identifier :: String -> I.Identifier
-identifier x = unsafePartialBecause ("invalid identifier in test: " <> x) $ fromRight identifier'
-  where
-    identifier' = unV Left Right (I.identifier x)
 
 formula :: String -> Formula
 formula x = unsafePartialBecause ("invalid formula in test: " <> x) $ fromRight formula'
