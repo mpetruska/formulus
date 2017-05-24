@@ -1,6 +1,7 @@
 module Data.Formula
        ( Formula
        , prettyPrintFormula
+       , compactPrintFormula
        , const
        , value
        , negate
@@ -17,22 +18,19 @@ module Data.Formula
 import Prelude
 import Control.Alt ((<|>))
 import Control.Lazy (fix)
-import Data.Array (singleton, some)
-import Data.Char.Unicode (isDigit)
 import Data.Either (Either)
 import Data.Ring as R
 import Data.Set (Set, union)
 import Data.Set as S
-import Data.String (fromCharArray)
-import Global (readFloat)
+import Data.String (Pattern(..), Replacement(..), replaceAll)
 import Text.Parsing.Parser (ParseError, fail, runParser)
-import Text.Parsing.Parser.Combinators (option, try)
+import Text.Parsing.Parser.Combinators (try)
 import Text.Parsing.Parser.Expr (Assoc(..), Operator(..), buildExprParser)
-import Text.Parsing.Parser.String (char, oneOf, satisfy, string)
+import Text.Parsing.Parser.String (char, oneOf, string)
 import Text.Parsing.Parser.Token (GenLanguageDef(..), LanguageDef, TokenParser, digit, makeTokenParser)
 
-import Data.Identifier (Identifier, identifierParser)
-import Parsers (StringParser, englishLetter)
+import Data.Identifier (Identifier, getIdentifierRepresentation, identifierParser)
+import Parsers (StringParser, englishLetter, float)
 import Validators (Error)
 
 data Formula = Const Number
@@ -55,7 +53,7 @@ instance showFormula :: Show Formula where
 
 prettyPrintFormula :: Formula -> String
 prettyPrintFormula (Const n)        = show n
-prettyPrintFormula (Value i)        = show i
+prettyPrintFormula (Value i)        = getIdentifierRepresentation i
 prettyPrintFormula (Negate f)       | precedence(f) > 1 = "-(" <> prettyPrintFormula f <> ")"
                                     | otherwise         = "-"  <> prettyPrintFormula f
 prettyPrintFormula (Add f1 f2)      = prettyPrintFormula f1 <> " + " <> prettyPrintFormula f2
@@ -68,6 +66,9 @@ prettyPrintFormula (Divide f1 f2)   | precedence(f1) > 2 && precedence(f2) > 2 =
                                     | precedence(f1) > 2                       = "(" <> prettyPrintFormula f1 <> ") / "  <> prettyPrintFormula f2
                                     |                       precedence(f2) > 2 =        prettyPrintFormula f1 <>  " / (" <> prettyPrintFormula f2 <> ")"
                                     | otherwise                                =        prettyPrintFormula f1 <>  " / "  <> prettyPrintFormula f2
+
+compactPrintFormula :: Formula -> String
+compactPrintFormula = prettyPrintFormula >>> replaceAll (Pattern " ") (Replacement "")
 
 precedence :: Formula -> Int
 precedence (Const _)      = 1
@@ -144,11 +145,6 @@ formulaParser = fix exprParser
     lexeme         = tokenParser.lexeme
     whiteSpace     = tokenParser.whiteSpace
     parens         = tokenParser.parens
-    someDigits     = some (satisfy isDigit)
-    dot            = singleton <$> char '.'
-    floatChars     = (<>) <$> someDigits
-                          <*> option [] ((<>) <$> dot <*> someDigits)
-    float          = readFloat <$> fromCharArray <$> floatChars
     
     constParser = Const <$> float
     valueParser = Value <$> identifierParser

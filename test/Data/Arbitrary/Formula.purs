@@ -2,14 +2,17 @@ module Test.Data.Arbitrary.Formula
        ( ArbitraryFormula
        , generatedFormula
        , genFormula
+       , formula
        ) where
 
-import Prelude hiding (const)
+import Prelude hiding (add, const, negate)
+import Data.Either (fromRight)
 import Data.NonEmpty (NonEmpty, (:|))
+import Partial.Unsafe (unsafePartialBecause)
 import Test.QuickCheck.Arbitrary (class Arbitrary, arbitrary)
 import Test.QuickCheck.Gen (Gen, choose, oneOf)
 
-import Data.Formula (Formula, add, const, divide, multiply, negate, subtract, value)
+import Data.Formula (Formula, add, const, divide, multiply, negate, parseFormula, subtract, value)
 import Test.Data.Arbitrary.Identifier (generatedIdentifier)
 
 newtype ArbitraryFormula = ArbitraryFormula Formula
@@ -73,3 +76,9 @@ genFormula = genFormula' 10
 
 instance formulaArbitrary :: Arbitrary ArbitraryFormula where
   arbitrary = genFormula
+
+formula :: String -> Formula
+formula x =
+    unsafePartialBecause ("invalid formula in test: " <> x) $ fromRight formula'
+  where
+    formula' = parseFormula x

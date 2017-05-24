@@ -27,7 +27,7 @@ instance ordIdentifier :: Ord Identifier where
   compare (Identifier a) (Identifier b) = compare a b
 
 instance showIdentifier :: Show Identifier where
-  show (Identifier a) = a
+  show (Identifier a) = "Identifier " <> show a
 
 identifier :: String -> Validated Identifier
 identifier x =
