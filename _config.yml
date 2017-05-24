@@ -1,1 +1,5 @@
 theme: jekyll-theme-merlot
+title: Formulus
+description: Share your calculations!
+githuburl: https://github.com/mpetruska/formulus
+baseurl: /formulus

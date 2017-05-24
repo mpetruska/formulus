@@ -197,7 +197,7 @@ worksheetParser =
       pure $ calculation { label:      decodeURIComponent label
                          , identifier: identifier
                          , formula:    formula
-                         , precision: precision
+                         , precision:  precision
                          }
     
     row :: StringParser WorksheetRow
