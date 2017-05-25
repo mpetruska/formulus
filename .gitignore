@@ -9,6 +9,10 @@
 /.purs*
 /.psa*
 
+# Build intermediate files
+
+/build/
+
 # Psc Ide
 .psc-ide-port
 
@@ -17,5 +21,9 @@
 
 # Jekyll
 
-_site/
-.sass-cache/
+/_site/
+/.sass-cache/
+
+# Log files
+
+*.log

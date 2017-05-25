@@ -1,0 +1,72 @@
+module Components.WorksheetComponent
+       ( State
+       , Action
+       , spec
+       , initialState
+       ) where
+
+import Prelude
+import Control.Monad.Eff (Eff)
+import Data.Array (fromFoldable) as A
+import Data.Either (Either(..), either)
+import Data.Lens (Lens', Prism', lens, prism, set, view)
+import Data.List (List(..), fromFoldable, zipWith)
+import Data.Maybe (maybe)
+import Data.String (Pattern(..), stripPrefix)
+import Data.Tuple (Tuple(..), uncurry)
+import DOM (DOM)
+import DOM.HTML (window) as DOM
+import DOM.HTML.Location (hash) as DOM
+import DOM.HTML.Window (location) as DOM
+import React.DOM as R
+import Thermite as T
+
+import Components.WorksheetRowComponent as Row
+import Data.Worksheet (Worksheet, WorksheetResults, decodeWorksheet, runWorksheet)
+import Operators (leftZipWith)
+
+type State = { rows :: List Row.State }
+
+_rows :: Lens' State (List Row.State)
+_rows = lens _.rows (_ { rows = _ })
+
+_worksheet :: Lens' State Worksheet
+_worksheet = lens getter setter
+  where
+    getter state = A.fromFoldable $ map _.worksheetRow state.rows
+    newRows worksheet = leftZipWith (set Row._worksheetRow) Row.createState (fromFoldable worksheet)
+    setter state worksheet = state { rows = newRows worksheet state.rows }
+
+_worksheetResults :: Lens' State WorksheetResults
+_worksheetResults = lens getter setter
+  where
+    getter state = A.fromFoldable $ map _.result state.rows
+    newRows results = zipWith (set Row._result) (fromFoldable results)
+    setter state worksheet = state { rows = newRows worksheet state.rows }
+
+calculateResults :: State -> State
+calculateResults state = set _worksheetResults (runWorksheet $ view _worksheet state) state
+
+defaultWorksheet :: Worksheet
+defaultWorksheet = []
+
+initialState :: forall e. Eff (dom :: DOM | e) State
+initialState = do
+  hash          <- DOM.window >>= DOM.location >>= DOM.hash
+  let encoded   =  maybe hash id $ stripPrefix (Pattern "#!") hash
+  let worksheet =  either (const defaultWorksheet) id $ decodeWorksheet encoded
+  pure $ calculateResults $ set _worksheet worksheet { rows: Nil }
+
+data Action = RowAction Int Row.Action
+
+_RowAction :: Prism' Action (Tuple Int Row.Action)
+_RowAction = prism (uncurry RowAction) \ta ->
+  case ta of
+    RowAction i a -> Right (Tuple i a)
+    _             -> Left ta
+
+performAction :: forall eff props. T.PerformAction eff State props Action
+performAction _ _ _ = void $ T.modifyState calculateResults
+
+spec :: forall eff props. T.Spec eff State props Action
+spec = T.focus _rows _RowAction $ T.foreach \_ -> Row.spec
