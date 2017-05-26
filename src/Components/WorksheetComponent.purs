@@ -10,9 +10,10 @@ module Components.WorksheetComponent
 
 import Prelude
 import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Class (liftEff)
 import Data.Array (fromFoldable) as A
 import Data.Either (Either(..), either)
-import Data.Foldable (fold)
+import Data.Foldable (fold, traverse_)
 import Data.Lens (Lens', Prism', lens, prism, set, view)
 import Data.List (List(..), fromFoldable, modifyAt, zipWith)
 import Data.Maybe (maybe)
@@ -20,12 +21,12 @@ import Data.String (Pattern(..), stripPrefix)
 import Data.Tuple (Tuple(..), uncurry)
 import DOM (DOM)
 import DOM.HTML (window) as DOM
-import DOM.HTML.Location (hash) as DOM
+import DOM.HTML.Location (hash, setHash) as DOM
 import DOM.HTML.Window (location) as DOM
 import Thermite as T
 
 import Components.WorksheetRowComponent as Row
-import Data.Worksheet (Worksheet, WorksheetResults, decodeWorksheet, runWorksheet)
+import Data.Worksheet (Worksheet, WorksheetResults, decodeWorksheet, encodeWorksheet, runWorksheet)
 import Operators (leftZipWith)
 import Parsers (float, parseWith)
 
@@ -61,23 +62,31 @@ initialState = do
   let worksheet =  either (const defaultWorksheet) id $ decodeWorksheet encoded
   pure $ calculateResults $ set _worksheet worksheet { rows: Nil }
 
+encodeWorksheetToHash :: forall e. State -> Eff (dom :: DOM | e) Unit
+encodeWorksheetToHash state = do
+  location      <- DOM.window >>= DOM.location
+  let encoded   =  "#!" <> (encodeWorksheet $ view _worksheet state)
+  DOM.setHash encoded location
+
 data Action = RowAction Int Row.Action
 
 _RowAction :: Prism' Action (Tuple Int Row.Action)
 _RowAction = prism (uncurry RowAction) \ta ->
   case ta of
     RowAction i a -> Right (Tuple i a)
-    _             -> Left ta
 
-performAction :: forall eff props. T.PerformAction eff State props Action
-performAction (RowAction i (Row.InputChanged s)) _ _ = void $ T.modifyState (update >>> calculateResults)
+performAction :: forall eff props. T.PerformAction (dom :: DOM | eff) State props Action
+performAction (RowAction i (Row.InputChanged s)) _ _ = void do
+    maybeNewState <- T.modifyState (update >>> calculateResults)
+    liftEff $ traverse_ encodeWorksheetToHash maybeNewState
   where
     eitherFloatValue = parseWith float s
     updateInput state x = maybe state (state { rows = _ }) $ modifyAt i (Row.updateInputValue x) state.rows
     update state = either (const state) (updateInput state) eitherFloatValue
+
 performAction _ _ _ = pure unit
 
-spec :: forall eff props. T.Spec eff State props Action
+spec :: forall eff props. T.Spec (dom :: DOM | eff) State props Action
 spec = fold
         [ T.focus _rows _RowAction $ T.foreach \_ -> Row.spec
         , T.simpleSpec performAction T.defaultRender
