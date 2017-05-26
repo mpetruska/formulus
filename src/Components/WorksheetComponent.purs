@@ -1,5 +1,8 @@
 module Components.WorksheetComponent
        ( State
+       , _rows
+       , _worksheet
+       , _worksheetResults
        , Action
        , spec
        , initialState
@@ -9,8 +12,9 @@ import Prelude
 import Control.Monad.Eff (Eff)
 import Data.Array (fromFoldable) as A
 import Data.Either (Either(..), either)
+import Data.Foldable (fold)
 import Data.Lens (Lens', Prism', lens, prism, set, view)
-import Data.List (List(..), fromFoldable, zipWith)
+import Data.List (List(..), fromFoldable, modifyAt, zipWith)
 import Data.Maybe (maybe)
 import Data.String (Pattern(..), stripPrefix)
 import Data.Tuple (Tuple(..), uncurry)
@@ -18,12 +22,12 @@ import DOM (DOM)
 import DOM.HTML (window) as DOM
 import DOM.HTML.Location (hash) as DOM
 import DOM.HTML.Window (location) as DOM
-import React.DOM as R
 import Thermite as T
 
 import Components.WorksheetRowComponent as Row
 import Data.Worksheet (Worksheet, WorksheetResults, decodeWorksheet, runWorksheet)
 import Operators (leftZipWith)
+import Parsers (float, parseWith)
 
 type State = { rows :: List Row.State }
 
@@ -66,7 +70,15 @@ _RowAction = prism (uncurry RowAction) \ta ->
     _             -> Left ta
 
 performAction :: forall eff props. T.PerformAction eff State props Action
-performAction _ _ _ = void $ T.modifyState calculateResults
+performAction (RowAction i (Row.InputChanged s)) _ _ = void $ T.modifyState (update >>> calculateResults)
+  where
+    eitherFloatValue = parseWith float s
+    updateInput state x = maybe state (state { rows = _ }) $ modifyAt i (Row.updateInputValue x) state.rows
+    update state = either (const state) (updateInput state) eitherFloatValue
+performAction _ _ _ = pure unit
 
 spec :: forall eff props. T.Spec eff State props Action
-spec = T.focus _rows _RowAction $ T.foreach \_ -> Row.spec
+spec = fold
+        [ T.focus _rows _RowAction $ T.foreach \_ -> Row.spec
+        , T.simpleSpec performAction T.defaultRender
+        ]

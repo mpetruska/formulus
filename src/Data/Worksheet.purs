@@ -1,7 +1,7 @@
 module Data.Worksheet
        ( Input
        , Calculation
-       , WorksheetRow
+       , WorksheetRow(..)
        , input
        , calculation
        , Worksheet
@@ -25,13 +25,13 @@ import Data.Maybe (maybe)
 import Data.String (joinWith)
 import Data.Validation.Semigroup (unV)
 import Global (decodeURIComponent, encodeURIComponent)
-import Text.Parsing.Parser (ParseError, fail, parseErrorMessage, runParser)
+import Text.Parsing.Parser (ParseError, fail, parseErrorMessage)
 import Text.Parsing.Parser.Combinators (sepBy, try)
 import Text.Parsing.Parser.String (string)
 
 import Data.Identifier (Identifier, getIdentifierRepresentation, identifier)
 import Data.Formula (Formula, compactPrintFormula, evaluateFormula, parseFormula)
-import Parsers (StringParser, anyStringNotContaining, float, int)
+import Parsers (StringParser, anyStringNotContaining, float, int, parseWith)
 import Validators (Error)
 
 type Input =
@@ -204,4 +204,4 @@ worksheetParser =
     row = inputRow <|> calculationRow
 
 decodeWorksheet :: String -> Either ParseError Worksheet
-decodeWorksheet s = runParser s worksheetParser
+decodeWorksheet = parseWith worksheetParser

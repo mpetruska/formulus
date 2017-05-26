@@ -4,15 +4,17 @@ module Parsers
        , int
        , float
        , anyStringNotContaining
+       , parseWith
        ) where
 
 import Prelude
 import Data.Array (many, notElem, singleton, some)
+import Data.Either (Either)
 import Data.Char.Unicode (isDigit)
 import Data.Int (round)
 import Data.String (fromCharArray, toCharArray)
 import Global (readFloat, readInt)
-import Text.Parsing.Parser (Parser)
+import Text.Parsing.Parser (Parser, ParseError, runParser)
 import Text.Parsing.Parser.Combinators (option)
 import Text.Parsing.Parser.String (char, oneOf, satisfy)
 
@@ -38,3 +40,6 @@ float =
 anyStringNotContaining :: Array Char -> StringParser String
 anyStringNotContaining chars =
   fromCharArray <$> (many $ satisfy (flip notElem chars))
+
+parseWith :: forall a. StringParser a -> String -> Either ParseError a
+parseWith = flip runParser

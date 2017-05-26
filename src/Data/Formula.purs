@@ -23,14 +23,14 @@ import Data.Ring as R
 import Data.Set (Set, union)
 import Data.Set as S
 import Data.String (Pattern(..), Replacement(..), replaceAll)
-import Text.Parsing.Parser (ParseError, fail, runParser)
+import Text.Parsing.Parser (ParseError, fail)
 import Text.Parsing.Parser.Combinators (try)
 import Text.Parsing.Parser.Expr (Assoc(..), Operator(..), buildExprParser)
 import Text.Parsing.Parser.String (char, oneOf, string)
 import Text.Parsing.Parser.Token (GenLanguageDef(..), LanguageDef, TokenParser, digit, makeTokenParser)
 
 import Data.Identifier (Identifier, getIdentifierRepresentation, identifierParser)
-import Parsers (StringParser, englishLetter, float)
+import Parsers (StringParser, englishLetter, float, parseWith)
 import Validators (Error)
 
 data Formula = Const Number
@@ -168,4 +168,4 @@ formulaParser = fix exprParser
     exprParser p = buildExprParser operatorTable (formulaParser' p)
 
 parseFormula :: String -> Either ParseError Formula
-parseFormula input = runParser input formulaParser
+parseFormula = parseWith formulaParser
