@@ -8,6 +8,29 @@
   color: #948983;
 }
 
+.worksheet-row {
+  margin-top: 1em;
+}
+
+.worksheet-edit-row {
+  margin-top: 1em;
+  border: 1px dashed #948983;
+}
+
+.worksheet-row-buttons {
+  float: right;
+}
+
+.add, .cancel, .delete, .done, .edit {
+  display: block;
+  cursor: pointer;
+}
+
+input.error {
+  border: 1px solid red;
+  color: red;
+}
+
 .worksheet-programming-error, .worksheet-error {
   color: red;
 }

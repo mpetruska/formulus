@@ -84,11 +84,18 @@ instance showWorksheetRow :: Show WorksheetRow where
   show (Input i)       = "Input "       <> showInput i
   show (Calculation c) = "Calculation " <> showCalculation c
 
-input :: Input -> WorksheetRow
-input = Input
+input :: String -> Identifier -> Number -> WorksheetRow
+input l i v = Input { label:      l
+                    , identifier: i
+                    , value:      v
+                    }
 
-calculation :: Calculation -> WorksheetRow
-calculation = Calculation
+calculation :: String -> Identifier -> Formula -> Int -> WorksheetRow
+calculation l i f p = Calculation { label:      l
+                                  , identifier: i
+                                  , formula:    f
+                                  , precision:  p
+                                  }
 
 type Worksheet = Array WorksheetRow
 
@@ -178,10 +185,7 @@ worksheetParser =
       identifier <- unV (joinWith ", " >>> fail) pure (identifier $ decodeURIComponent idString)
       _          <- string ":"
       v          <- float
-      pure $ input { label:      decodeURIComponent label
-                   , identifier: identifier
-                   , value:      v
-                   }
+      pure $ input (decodeURIComponent label) identifier v
         
     calculationRow :: StringParser WorksheetRow
     calculationRow = try do
@@ -195,11 +199,7 @@ worksheetParser =
       formula    <- either (parseErrorMessage >>> fail) pure (parseFormula $ decodeURIComponent fString)
       _          <- string ":"
       precision  <- int
-      pure $ calculation { label:      decodeURIComponent label
-                         , identifier: identifier
-                         , formula:    formula
-                         , precision:  precision
-                         }
+      pure $ calculation (decodeURIComponent label) identifier formula precision
     
     row :: StringParser WorksheetRow
     row = inputRow <|> calculationRow

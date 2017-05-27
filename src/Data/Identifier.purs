@@ -1,6 +1,7 @@
 module Data.Identifier
        ( Identifier
        , identifier
+       , defaultIdentifier
        , identifierParser
        , getIdentifierRepresentation
        ) where
@@ -33,6 +34,9 @@ identifier :: String -> Validated Identifier
 identifier x =
   Identifier <$>
     matches' (toValidated' identifierRegex) "identifier format is not valid" x
+
+defaultIdentifier :: Identifier
+defaultIdentifier = Identifier "x"
 
 identifierRegex :: Either String Regex
 identifierRegex = regex "^[\\_a-z][\\_a-z0-9]*$" noFlags
