@@ -7,3 +7,7 @@
   font-style: oblique;
   color: #948983;
 }
+
+.worksheet-programming-error, .worksheet-error {
+  color: red;
+}

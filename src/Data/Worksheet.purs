@@ -31,6 +31,7 @@ import Text.Parsing.Parser.String (string)
 
 import Data.Identifier (Identifier, getIdentifierRepresentation, identifier)
 import Data.Formula (Formula, compactPrintFormula, evaluateFormula, parseFormula)
+import Data.NumberFormatter (formatNumber)
 import Parsers (StringParser, anyStringNotContaining, float, int, parseWith)
 import Validators (Error)
 
@@ -134,14 +135,14 @@ runWorksheetRow (Calculation c) = do
     either (Error >>> CalculationResult >>> singleton >>> tell)
            (\value -> do
               put $ insert c.identifier value table
-              tell [ CalculationResult $ Result $ format value ])
+              tell [ CalculationResult $ Result $ formatNumber c.precision value ])
            (eval table)
   where
+    undefinedValue :: Identifier -> Error
+    undefinedValue i = "undefined value " <> show (getIdentifierRepresentation i)
+  
     resolve :: ValueTable -> Identifier -> Either Error Number
-    resolve table i = maybe (Left ("Undefined value " <> show i)) Right $ lookup i table
-    
-    format :: Number -> String
-    format n = show n -- TODO: pretty print number based on precision and using thousand separator
+    resolve table i = maybe (Left (undefinedValue i)) Right $ lookup i table
     
     eval :: ValueTable -> Either Error Number
     eval table = evaluateFormula (resolve table) c.formula
