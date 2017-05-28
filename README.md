@@ -38,9 +38,9 @@ How to share your calculations
 Once your worksheet is ready all the components that make up the
 calculation (inputs and calculations) are encoded in the fragment
 identifier of the url
-(e.g. `#!i:km:km:2500.0,i:litres per 100 km:c:7.5,c:total consumption:total:km*c/100.0:1`).
+(e.g. `#!i:km:km:2500.0,i:litres%20per%20100%20km:c:7.5,c:total%20consumption:total:km*c%2F100.0:1`).
 All you need to do is to copy or bookmark the whole url
-(e.g. [https://mpetruska.github.io/formulus/#!i:km:km:2500.0,i:litres per 100 km:c:7.5,c:total consumption:total:km*c/100.0:1](https://mpetruska.github.io/formulus/#!i:km:km:2500.0,i:litres per 100 km:c:7.5,c:total consumption:total:km*c/100.0:1)),
+(e.g. [https://mpetruska.github.io/formulus/#!i:km:km:2500.0,i:litres%20per%20100%20km:c:7.5,c:total%20consumption:total:km*c%2F100.0:1](https://mpetruska.github.io/formulus/#!i:km:km:2500.0,i:litres%20per%20100%20km:c:7.5,c:total%20consumption:total:km*c%2F100.0:1)),
 opening the link in a browser
 makes the application re-load the worksheet. Be aware that the
 current values of the input fields are also encoded.
