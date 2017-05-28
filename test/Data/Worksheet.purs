@@ -22,14 +22,14 @@ worksheetTestSuite =
       (Right simpleWorksheet) `equal` (decodeWorksheet encodedSimpleWorksheet)
     
     test "run calculations" do
-      encodedSimpleWorksheet                `calculatesAs` [ Nothing, CalculationResult (Result "53.0") ]
-      "i:x:x:26,c:y:y:x%2Fx:0"              `calculatesAs` [ Nothing, CalculationResult (Result  "1.0") ]
-      "i:x:x:12,i:y:y:34,c:z:z:100*x%2By:0" `calculatesAs` [ Nothing, Nothing, CalculationResult (Result "1234.0") ]
+      encodedSimpleWorksheet                `calculatesAs` [ Nothing, CalculationResult (Result "53.00") ]
+      "i:x:x:26,c:y:y:x%2Fx:0"              `calculatesAs` [ Nothing, CalculationResult (Result  "1") ]
+      "i:x:x:12,i:y:y:34,c:z:z:100*x%2By:4" `calculatesAs` [ Nothing, Nothing, CalculationResult (Result $ "1\xa0" <> "234.0000") ]
 
 simpleWorksheet :: Worksheet
 simpleWorksheet =
-  [ input       { label: "label1",                       identifier: identifier "x",  value: 42.0 }
-  , calculation { label: "label:with:colons,and,commas", identifier: identifier "_y", formula: formula "x + 11", precision: 2 }
+  [ input       "label1"                       (identifier "x")  42.0
+  , calculation "label:with:colons,and,commas" (identifier "_y") (formula "x + 11") 2
   ]
 
 encodedSimpleWorksheet :: String
