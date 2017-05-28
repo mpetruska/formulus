@@ -17,17 +17,17 @@ author enjoys working with [PureScript](http://www.purescript.org/)).
 Creating calculations
 ---------------------
 
-<img src="https://raw.githubusercontent.com/mpetruska/formulus/master/screenshots/tutorial_001.jpg" width="400" />
+<img src="https://raw.githubusercontent.com/mpetruska/formulus/master/screenshots/tutorial_001.jpg" width="500" />
 
-<img src="https://raw.githubusercontent.com/mpetruska/formulus/master/screenshots/tutorial_002.jpg" width="400" />
+<img src="https://raw.githubusercontent.com/mpetruska/formulus/master/screenshots/tutorial_002.jpg" width="500" />
 
-<img src="https://raw.githubusercontent.com/mpetruska/formulus/master/screenshots/tutorial_003.png" width="400" />
+<img src="https://raw.githubusercontent.com/mpetruska/formulus/master/screenshots/tutorial_003.png" width="500" />
 
-<img src="https://raw.githubusercontent.com/mpetruska/formulus/master/screenshots/tutorial_004.png" width="400" />
+<img src="https://raw.githubusercontent.com/mpetruska/formulus/master/screenshots/tutorial_004.png" width="500" />
 
-<img src="https://raw.githubusercontent.com/mpetruska/formulus/master/screenshots/tutorial_005.jpg" width="400" />
+<img src="https://raw.githubusercontent.com/mpetruska/formulus/master/screenshots/tutorial_005.jpg" width="500" />
 
-<img src="https://raw.githubusercontent.com/mpetruska/formulus/master/screenshots/tutorial_006.jpg" width="400" />
+<img src="https://raw.githubusercontent.com/mpetruska/formulus/master/screenshots/tutorial_006.jpg" width="500" />
 
 Only the four basic mathematical operations (and parentheses) are
 recognized by the formula parser at the moment.
@@ -40,7 +40,7 @@ calculation (inputs and calculations) are encoded in the fragment
 identifier of the url
 (e.g. `#!i:km:km:2500.0,i:litres per 100 km:c:7.5,c:total consumption:total:km*c/100.0:1`).
 All you need to do is to copy or bookmark the whole url
-(e.g. `https://mpetruska.github.io/formulus/#!i:km:km:2500.0,i:litres per 100 km:c:7.5,c:total consumption:total:km*c/100.0:1`),
+(e.g. [https://mpetruska.github.io/formulus/#!i:km:km:2500.0,i:litres per 100 km:c:7.5,c:total consumption:total:km*c/100.0:1](https://mpetruska.github.io/formulus/#!i:km:km:2500.0,i:litres per 100 km:c:7.5,c:total consumption:total:km*c/100.0:1)),
 opening the link in a browser
 makes the application re-load the worksheet. Be aware that the
 current values of the input fields are also encoded.
