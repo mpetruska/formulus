@@ -1,4 +1,10 @@
 
+.left-menu {
+  float: left;
+  position: absolute;
+  top: 200px;
+}
+
 .worksheet-label {
   font-weight: bold;
 }
