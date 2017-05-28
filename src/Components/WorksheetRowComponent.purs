@@ -163,12 +163,16 @@ render dispatch _ state _ = renderRow state.isEditing state.worksheetRow state.r
     renderRow true _ _ =
         [ R.div [ RP.className "worksheet-edit-row" ]
           [ editingWorksheetRowButtons
+          , R.label' [ R.text "label: " ]
           , editableInput "text" "worksheet-label-edit"      _.labelText      LabelTextChanged      (const false)
           , R.br' []
+          , R.label' [ R.text "identifier: " ]
           , editableInput "text" "worksheet-identifier-edit" _.identifierText IdentifierTextChanged _.identifierError
-          , R.text " = "
+          , R.br' []
+          , R.label' [ R.text "formula: " ]
           , editableInput "text" "worksheet-formula-edit"    _.formulaText    FormulaTextChanged    _.formulaError
-          , R.text " : "
+          , R.br' []
+          , R.label' [ R.text "precision: " ]
           , editableInput "text" "worksheet-precision-edit"  _.precisionText  PrecisionTextChanged  _.precisionError
           ]
         ]

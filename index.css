@@ -17,6 +17,11 @@
   border: 1px dashed #948983;
 }
 
+.worksheet-edit-row label {
+  display: inline-block;
+  width: 6em;
+}
+
 .worksheet-row-buttons {
   float: right;
 }
