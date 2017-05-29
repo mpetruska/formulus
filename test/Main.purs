@@ -10,8 +10,10 @@ import Test.Unit.Main (runTest)
 
 import Test.Data.Formula (formulaTestSuite)
 import Test.Data.Worksheet (worksheetTestSuite)
+import Test.Parsers (parsingSuite)
 
 main :: forall e. Eff ( console :: CONSOLE, testOutput :: TESTOUTPUT, avar :: AVAR, random :: RANDOM | e) Unit
 main = runTest do
+  parsingSuite
   formulaTestSuite
   worksheetTestSuite
