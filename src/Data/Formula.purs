@@ -9,6 +9,8 @@ module Data.Formula
        , subtract
        , multiply
        , divide
+       , minimum
+       , maximum
        , formulaParser
        , parseFormula
        , referencedIdentifiers
@@ -33,23 +35,27 @@ import Data.Identifier (Identifier, getIdentifierRepresentation, identifierParse
 import Parsers (StringParser, englishLetter, float, parseWith)
 import Validators (Error)
 
-data Formula = Const Number
-             | Value Identifier
-             | Negate Formula
-             | Add Formula Formula
+data Formula = Const    Number
+             | Value    Identifier
+             | Negate   Formula
+             | Add      Formula Formula
              | Subtract Formula Formula
              | Multiply Formula Formula
-             | Divide Formula Formula
+             | Divide   Formula Formula
+             | Minimum  Formula Formula
+             | Maximum  Formula Formula
 
 derive instance eqFormula :: Eq Formula
 instance showFormula :: Show Formula where
-  show (Const n)        = "Const "     <> show n
-  show (Value i)        = "Value "     <> show i
-  show (Negate f)       = "Negate ("   <> show f  <> ")"
-  show (Add f1 f2)      = "Add ("      <> show f1 <> ") (" <> show f2 <> ")"
+  show (Const    n)     = "Const "     <> show n
+  show (Value    i)     = "Value "     <> show i
+  show (Negate   f)     = "Negate ("   <> show f  <> ")"
+  show (Add      f1 f2) = "Add ("      <> show f1 <> ") (" <> show f2 <> ")"
   show (Subtract f1 f2) = "Subtract (" <> show f1 <> ") (" <> show f2 <> ")"
   show (Multiply f1 f2) = "Multiply (" <> show f1 <> ") (" <> show f2 <> ")"
-  show (Divide f1 f2)   = "Divide ("   <> show f1 <> ") (" <> show f2 <> ")"
+  show (Divide   f1 f2) = "Divide ("   <> show f1 <> ") (" <> show f2 <> ")"
+  show (Minimum  f1 f2) = "Minimum ("  <> show f1 <> ") (" <> show f2 <> ")"
+  show (Maximum  f1 f2) = "Maximum ("  <> show f1 <> ") (" <> show f2 <> ")"
 
 prettyPrintFormula :: Formula -> String
 prettyPrintFormula (Const n)        = show n
@@ -66,18 +72,22 @@ prettyPrintFormula (Divide f1 f2)   | precedence(f1) > 2 && precedence(f2) > 2 =
                                     | precedence(f1) > 2                       = "(" <> prettyPrintFormula f1 <> ") / "  <> prettyPrintFormula f2
                                     |                       precedence(f2) > 2 =        prettyPrintFormula f1 <>  " / (" <> prettyPrintFormula f2 <> ")"
                                     | otherwise                                =        prettyPrintFormula f1 <>  " / "  <> prettyPrintFormula f2
+prettyPrintFormula (Minimum f1 f2)  = "min(" <> prettyPrintFormula f1 <> ", " <> prettyPrintFormula f2 <> ")"
+prettyPrintFormula (Maximum f1 f2)  = "max(" <> prettyPrintFormula f1 <> ", " <> prettyPrintFormula f2 <> ")"
 
 compactPrintFormula :: Formula -> String
 compactPrintFormula = prettyPrintFormula >>> replaceAll (Pattern " ") (Replacement "")
 
 precedence :: Formula -> Int
-precedence (Const _)      = 1
-precedence (Value _)      = 1
-precedence (Negate _)     = 2
-precedence (Add _ _)      = 3
+precedence (Const    _)   = 1
+precedence (Value    _)   = 1
+precedence (Negate   _)   = 2
+precedence (Add      _ _) = 3
 precedence (Subtract _ _) = 3
 precedence (Multiply _ _) = 2
-precedence (Divide _ _)   = 2
+precedence (Divide   _ _) = 2
+precedence (Minimum  _ _) = 1
+precedence (Maximum  _ _) = 1
 
 const :: Number -> Formula
 const = Const
@@ -100,26 +110,37 @@ multiply = Multiply
 divide :: Formula -> Formula -> Formula
 divide = Divide
 
+minimum :: Formula -> Formula -> Formula
+minimum = Minimum
+
+maximum :: Formula -> Formula -> Formula
+maximum = Maximum
+
 referencedIdentifiers :: Formula -> Set Identifier
-referencedIdentifiers (Const _)        = S.empty
-referencedIdentifiers (Value i)        = S.singleton i
-referencedIdentifiers (Negate f)       = referencedIdentifiers f
-referencedIdentifiers (Add f1 f2)      = union (referencedIdentifiers f1) (referencedIdentifiers f2)
+referencedIdentifiers (Const    _)     = S.empty
+referencedIdentifiers (Value    i)     = S.singleton i
+referencedIdentifiers (Negate   f)     = referencedIdentifiers f
+referencedIdentifiers (Add      f1 f2) = union (referencedIdentifiers f1) (referencedIdentifiers f2)
 referencedIdentifiers (Subtract f1 f2) = union (referencedIdentifiers f1) (referencedIdentifiers f2)
 referencedIdentifiers (Multiply f1 f2) = union (referencedIdentifiers f1) (referencedIdentifiers f2)
-referencedIdentifiers (Divide f1 f2)   = union (referencedIdentifiers f1) (referencedIdentifiers f2)
+referencedIdentifiers (Divide   f1 f2) = union (referencedIdentifiers f1) (referencedIdentifiers f2)
+referencedIdentifiers (Minimum  f1 f2) = union (referencedIdentifiers f1) (referencedIdentifiers f2)
+referencedIdentifiers (Maximum  f1 f2) = union (referencedIdentifiers f1) (referencedIdentifiers f2)
 
 evaluateFormula :: (Identifier -> Either Error Number) -> Formula -> Either Error Number
 evaluateFormula resolve = eval
   where
     eval :: Formula -> Either Error Number
-    eval (Const n)        = pure n
-    eval (Value i)        = resolve i
-    eval (Negate f)       = R.negate <$> eval f
-    eval (Add f1 f2)      = (+) <$> (eval f1) <*> (eval f2)
+    eval (Const    n)     = pure n
+    eval (Value    i)     = resolve i
+    eval (Negate   f)     = R.negate <$> eval f
+    eval (Add      f1 f2) = (+) <$> (eval f1) <*> (eval f2)
     eval (Subtract f1 f2) = (-) <$> (eval f1) <*> (eval f2)
     eval (Multiply f1 f2) = (*) <$> (eval f1) <*> (eval f2)
-    eval (Divide f1 f2)   = (/) <$> (eval f1) <*> (eval f2)
+    eval (Divide   f1 f2) = (/) <$> (eval f1) <*> (eval f2)
+    eval (Minimum  f1 f2) = min <$> (eval f1) <*> (eval f2)
+    eval (Maximum  f1 f2) = max <$> (eval f1) <*> (eval f2)
+    
 
 languageDef :: LanguageDef
 languageDef =
@@ -148,8 +169,23 @@ formulaParser = fix exprParser
     
     constParser = Const <$> float
     valueParser = Value <$> identifierParser
+    
+    binaryFunctionParser name op p = try do
+      _  <- string name
+      _  <- whiteSpace *> string "("
+      f1 <- p
+      _  <- string ","
+      f2 <- p
+      _  <- string ")"
+      pure $ op f1 f2
+      
+    minParser = binaryFunctionParser "min" Minimum
+    maxParser = binaryFunctionParser "max" Maximum
+      
     termParser p = parens p
                <|> constParser
+               <|> minParser p
+               <|> maxParser p
                <|> valueParser
     formulaParser' p = whiteSpace *> termParser p <* whiteSpace
     

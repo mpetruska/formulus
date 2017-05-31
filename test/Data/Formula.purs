@@ -13,7 +13,8 @@ import Test.Unit.QuickCheck (quickCheck)
 import Test.QuickCheck ((<?>), Result)
 import Partial.Unsafe (unsafePartial, unsafePartialBecause)
 
-import Data.Formula (Formula, add, const, divide, evaluateFormula, multiply, negate, parseFormula, prettyPrintFormula, subtract, value)
+import Data.Formula ( Formula, add, const, divide, evaluateFormula, multiply, maximum, minimum
+                    , negate, parseFormula, prettyPrintFormula, subtract, value)
 import Data.Identifier as I
 import Test.Data.Arbitrary.Identifier (identifier)
 import Test.Data.Arbitrary.Formula (ArbitraryFormula, generatedFormula)
@@ -68,7 +69,28 @@ parsingSuite =
         divide
           (multiply (negate $ add (const 11.0) (value (identifier "x_is_here"))) (const 1.3333))
           (value (identifier "_y"))
-
+    
+    test "min function" do
+      "min(1, 0)"     `parsesSuccessfullyAs` minimum (const 1.0) (const 0.0)
+      " min(1, 0)"    `parsesSuccessfullyAs` minimum (const 1.0) (const 0.0)
+      "min (1, 0)"    `parsesSuccessfullyAs` minimum (const 1.0) (const 0.0)
+      "min( 1, 0)"    `parsesSuccessfullyAs` minimum (const 1.0) (const 0.0)
+      "min(1 , 0)"    `parsesSuccessfullyAs` minimum (const 1.0) (const 0.0)
+      "min(1,0)"      `parsesSuccessfullyAs` minimum (const 1.0) (const 0.0)
+      "min(1, 0 )"    `parsesSuccessfullyAs` minimum (const 1.0) (const 0.0)
+      "min(1, 0) "    `parsesSuccessfullyAs` minimum (const 1.0) (const 0.0)
+      "min(x - y, 0)" `parsesSuccessfullyAs` minimum (subtract (value $ identifier "x") (value $ identifier "y")) (const 0.0)
+    
+    test "max function" do
+      "max(1, 0)"     `parsesSuccessfullyAs` maximum (const 1.0) (const 0.0)
+      " max(1, 0)"    `parsesSuccessfullyAs` maximum (const 1.0) (const 0.0)
+      "max (1, 0)"    `parsesSuccessfullyAs` maximum (const 1.0) (const 0.0)
+      "max( 1, 0)"    `parsesSuccessfullyAs` maximum (const 1.0) (const 0.0)
+      "max(1 , 0)"    `parsesSuccessfullyAs` maximum (const 1.0) (const 0.0)
+      "max(1,0)"      `parsesSuccessfullyAs` maximum (const 1.0) (const 0.0)
+      "max(1, 0 )"    `parsesSuccessfullyAs` maximum (const 1.0) (const 0.0)
+      "max(1, 0) "    `parsesSuccessfullyAs` maximum (const 1.0) (const 0.0)
+      "max(x - y, 0)" `parsesSuccessfullyAs` maximum (subtract (value $ identifier "x") (value $ identifier "y")) (const 0.0)
 
 propertyBasedParsingSuite :: forall e. TestSuite (random :: RANDOM | e)
 propertyBasedParsingSuite =
