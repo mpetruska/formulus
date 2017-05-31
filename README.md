@@ -29,8 +29,10 @@ Creating calculations
 
 <img src="https://raw.githubusercontent.com/mpetruska/formulus/master/screenshots/tutorial_006.jpg" width="500" />
 
-Only the four basic mathematical operations (and parentheses) are
-recognized by the formula parser at the moment.
+Operations:
+- negation (`-` prefix)
+- mathematical base operators (`+`, `-`, `*`, `/`)
+- "min" and "max" as binary functions (form: `min(x, y)` and `max(x, y)`)
 
 How to share your calculations
 ------------------------------
