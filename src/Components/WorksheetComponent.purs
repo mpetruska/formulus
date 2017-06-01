@@ -34,7 +34,9 @@ import Data.Worksheet (Worksheet, WorksheetResults, decodeWorksheet, encodeWorks
 import Operators (leftZipWith)
 import Parsers (float, parseWith)
 
-type State = { rows :: List Row.State }
+type State = { rows     :: List Row.State
+             , isLocked :: Boolean
+             }
 
 _rows :: Lens' State (List Row.State)
 _rows = lens _.rows (_ { rows = _ })
@@ -56,20 +58,34 @@ _worksheetResults = lens getter setter
 calculateResults :: State -> State
 calculateResults state = set _worksheetResults (runWorksheet $ view _worksheet state) state
 
+setLockedOnRows :: State -> State
+setLockedOnRows state = over _rows (map (set Row._isLocked state.isLocked)) state
+
 defaultWorksheet :: Worksheet
 defaultWorksheet = []
 
+defaultState :: Boolean -> State
+defaultState = { rows:     Nil
+               , isLocked: _
+               }
+
 initialState :: forall e. Eff (dom :: DOM | e) State
 initialState = do
-  hash          <- DOM.window >>= DOM.location >>= DOM.hash
-  let encoded   =  maybe hash id $ stripPrefix (Pattern "#!") hash
-  let worksheet =  either (const defaultWorksheet) id $ decodeWorksheet encoded
-  pure $ calculateResults $ set _worksheet worksheet { rows: Nil }
+    hash          <- DOM.window >>= DOM.location >>= DOM.hash
+    let unhashed  =  optionalPrefix "#" hash
+    let unlocked  =  optionalPrefix "l" unhashed
+    let encoded   =  optionalPrefix "!" unlocked
+    let worksheet =  either (const defaultWorksheet) id $ decodeWorksheet encoded
+    let isLocked  =  unhashed /= unlocked
+    pure $ calculateResults $ setLockedOnRows $ set _worksheet worksheet (defaultState isLocked)
+  where
+    optionalPrefix prefix input = maybe input id $ stripPrefix (Pattern prefix) input
 
 encodeWorksheetToHash :: forall e. State -> Eff (dom :: DOM | e) Unit
 encodeWorksheetToHash state = do
   location      <- DOM.window >>= DOM.location
-  let encoded   =  "#!" <> (encodeWorksheet $ view _worksheet state)
+  let prefix    =  if state.isLocked then "#l!" else "#!"
+  let encoded   =  prefix <> (encodeWorksheet $ view _worksheet state)
   DOM.setHash encoded location
 
 data Action = RowAction Int Row.Action
@@ -107,9 +123,11 @@ performAction _ _ _ = pure unit
 
 renderAddRow :: forall props. T.Render State props Action
 renderAddRow dispatch _ state _ =
-  [ R.a [ RP.className "add"
-        , RP.onClick \_ -> dispatch AddRow ] [ R.text "add" ]
-  ]
+  if not state.isLocked
+    then [ R.a [ RP.className "add"
+               , RP.onClick \_ -> dispatch AddRow ] [ R.text "add" ]
+         ]
+    else []
 
 spec :: forall eff props. T.Spec (dom :: DOM | eff) State props Action
 spec = fold

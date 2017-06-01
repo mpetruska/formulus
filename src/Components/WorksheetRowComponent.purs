@@ -2,6 +2,7 @@ module Components.WorksheetRowComponent
        ( Action(..)
        , State
        , _worksheetRow
+       , _isLocked
        , _result
        , createState
        , newDefaultRow
@@ -41,6 +42,7 @@ data Action = Changed
             | PrecisionTextChanged  String
 
 type State = { worksheetRow    :: WorksheetRow
+             , isLocked        :: Boolean
              , inputText       :: String
              , result          :: WorksheetRowResult
              , isEditing       :: Boolean
@@ -57,11 +59,15 @@ type State = { worksheetRow    :: WorksheetRow
 _worksheetRow :: Lens' State WorksheetRow
 _worksheetRow = lens _.worksheetRow (_ { worksheetRow = _ })
 
+_isLocked :: Lens' State Boolean
+_isLocked = lens _.isLocked (_ { isLocked = _ })
+
 _result :: Lens' State WorksheetRowResult
 _result = lens _.result (_ { result = _ })
 
 newState :: WorksheetRow -> String -> State
 newState worksheetRow inputText = { worksheetRow:    worksheetRow
+                                  , isLocked:        false
                                   , inputText:       inputText
                                   , result:          Nothing
                                   , isEditing:       false
@@ -144,13 +150,18 @@ render dispatch _ state _ = renderRow state.isEditing state.worksheetRow state.r
               , RP.onChange $ dispatchValueChanged action
               ] []
     
-    defaultWorksheetRowButtons =
+    editableWorksheetRowButtons =
       R.div [ RP.className "worksheet-row-buttons" ]
             [ R.a [ RP.className "edit"
                   , RP.onClick \_ -> dispatch SwitchToEdit ] [ R.text "edit" ]
             , R.a [ RP.className "delete"
                   , RP.onClick \_ -> dispatch Delete ] [ R.text "delete" ]
             ]
+    
+    withDefaultWorksheetRowButtons next =
+      if not state.isLocked
+        then [editableWorksheetRowButtons] <> next
+        else next
     
     editingWorksheetRowButtons =
       R.div [ RP.className "worksheet-row-buttons" ]
@@ -178,25 +189,27 @@ render dispatch _ state _ = renderRow state.isEditing state.worksheetRow state.r
         ]
     renderRow _ (Input input) _ =
         [ R.div [ RP.className "worksheet-row" ]
-          [ defaultWorksheetRowButtons
-          , R.span [ RP.className "worksheet-label" ] [ R.text input.label
-                                                      , R.text " :" ]
-          , R.br' []
-          , R.span [ RP.className "worksheet-identifier" ] [ R.text (getIdentifierRepresentation input.identifier)
-                                                           , R.text " = " ]
-          , editableInput "number" "worksheet-input" _.inputText InputChanged (const false)
-          ]
+          ( withDefaultWorksheetRowButtons
+              [ R.span [ RP.className "worksheet-label" ] [ R.text input.label
+                                                          , R.text " :" ]
+              , R.br'  []
+              , R.span [ RP.className "worksheet-identifier" ] [ R.text (getIdentifierRepresentation input.identifier)
+                                                               , R.text " = " ]
+              , editableInput "number" "worksheet-input" _.inputText InputChanged (const false)
+              ]
+          )
         ]
     renderRow _ (Calculation c) (CalculationResult result) =
         [ R.div [ RP.className "worksheet-row" ]
-          [ defaultWorksheetRowButtons
-          , R.span [ RP.className "worksheet-label" ] [ R.text c.label
-                                                      , R.text " :" ]
-          , R.br' []
-          , R.span [ RP.className "worksheet-identifier" ] [ R.text (getIdentifierRepresentation c.identifier)
-                                                           , R.text " = " ]
-          , renderCalculationResult result
-          ]
+          ( withDefaultWorksheetRowButtons
+              [ R.span [ RP.className "worksheet-label" ] [ R.text c.label
+                                                          , R.text " :" ]
+              , R.br'  []
+              , R.span [ RP.className "worksheet-identifier" ] [ R.text (getIdentifierRepresentation c.identifier)
+                                                               , R.text " = " ]
+              , renderCalculationResult result
+              ]
+          )
         ]
     renderRow _ _ _ =
         [ R.div [ RP.className "worksheet-row" ]
