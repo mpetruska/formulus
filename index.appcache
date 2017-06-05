@@ -2,7 +2,7 @@
 title: index appcache
 ---
 CACHE MANIFEST
-# version 0.0.1.1
+# version 0.0.1.2
 {{ site.baseurl }}/dist/index.min.js
 
 {{ site.baseurl }}/assets/css/style.css

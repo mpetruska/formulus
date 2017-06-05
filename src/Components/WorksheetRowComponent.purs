@@ -17,8 +17,8 @@ import Data.Either (Either(..), either)
 import Data.Lens (Lens', lens, over)
 import Data.String (joinWith, null)
 import Data.Validation.Semigroup (unV)
-import React as R
-import React.DOM as R
+import React (EventHandlerContext) as R
+import React.DOM (a, br', div, input, label', span, text) as R
 import React.DOM.Props as RP
 import Text.Parsing.Parser (parseErrorMessage)
 import Thermite as T

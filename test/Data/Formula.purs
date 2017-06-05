@@ -4,7 +4,7 @@ module Test.Data.Formula
 
 import Prelude hiding (add, const, negate)
 import Control.Monad.Eff.Random (RANDOM)
-import Data.Either (Either(..), fromRight)
+import Data.Either (Either(..), fromRight, isLeft)
 import Data.Foldable (traverse_)
 import Data.Number (infinity, isNaN)
 import Test.Unit (Test, TestSuite, suite, test)
@@ -91,6 +91,13 @@ parsingSuite =
       "max(1, 0 )"    `parsesSuccessfullyAs` maximum (const 1.0) (const 0.0)
       "max(1, 0) "    `parsesSuccessfullyAs` maximum (const 1.0) (const 0.0)
       "max(x - y, 0)" `parsesSuccessfullyAs` maximum (subtract (value $ identifier "x") (value $ identifier "y")) (const 0.0)
+    
+    test "badly formed formula" do
+      parsingFailure "min(1, "
+      parsingFailure "1 2 3"
+      parsingFailure " 1 * "
+      parsingFailure "1 /* 2"
+      parsingFailure "1-+2"
 
 propertyBasedParsingSuite :: forall e. TestSuite (random :: RANDOM | e)
 propertyBasedParsingSuite =
@@ -144,6 +151,9 @@ formula x = unsafePartialBecause ("invalid formula in test: " <> x) $ fromRight 
 
 parsesSuccessfullyAs :: forall e. String -> Formula -> Test e
 parsesSuccessfullyAs input f = equal (Right f) (parseFormula input)
+
+parsingFailure :: forall e. String -> Test e
+parsingFailure input = assert ("expected parse failure for " <> show input) $ isLeft $ parseFormula input
 
 parsingBinaryOperationTest :: forall e. String -> (Formula -> Formula -> Formula) -> Test e
 parsingBinaryOperationTest operator f = do

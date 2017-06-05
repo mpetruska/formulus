@@ -28,7 +28,7 @@ import Data.String (Pattern(..), Replacement(..), replaceAll)
 import Text.Parsing.Parser (ParseError, fail)
 import Text.Parsing.Parser.Combinators (try)
 import Text.Parsing.Parser.Expr (Assoc(..), Operator(..), buildExprParser)
-import Text.Parsing.Parser.String (char, oneOf, string)
+import Text.Parsing.Parser.String (char, eof, oneOf, string)
 import Text.Parsing.Parser.Token (GenLanguageDef(..), LanguageDef, TokenParser, digit, makeTokenParser)
 
 import Data.Identifier (Identifier, getIdentifierRepresentation, identifierParser)
@@ -161,7 +161,7 @@ tokenParser :: TokenParser
 tokenParser = makeTokenParser languageDef
 
 formulaParser :: StringParser Formula
-formulaParser = fix exprParser
+formulaParser = (fix exprParser) <* eof
   where
     lexeme         = tokenParser.lexeme
     whiteSpace     = tokenParser.whiteSpace
